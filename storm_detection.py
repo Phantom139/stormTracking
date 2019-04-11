@@ -83,6 +83,33 @@ amp_storms_c = []
 
 T = slp.shape[0]
 
+# Robert: Added this debugging block until I figure out what's going on.
+for tS in range(0, 4):
+	print(tS)
+	#
+	# Detect lon and lat coordinates of storms
+	#
+	lon_storms, lat_storms, amp = storm.detect_storms(slp[tS,:,:], lon, lat, res=2, Npix_min=9, cyc='anticyclonic')
+	lon_storms_a.append(lon_storms)
+	lat_storms_a.append(lat_storms)
+	amp_storms_a.append(amp)
+	print(lon_storms)
+	print(lat_storms)
+	print(amp)
+	#
+	lon_storms, lat_storms, amp = storm.detect_storms(slp[tS,:,:], lon, lat, res=2, Npix_min=9, cyc='cyclonic')
+	lon_storms_c.append(lon_storms)
+	lat_storms_c.append(lat_storms)
+	amp_storms_c.append(amp)
+	#
+	# Save as we go
+	#
+	if tS == 3:
+		print('Save data...')
+		storms = storm.storms_list(lon_storms_a, lat_storms_a, amp_storms_a, lon_storms_c, lat_storms_c, amp_storms_c)
+		np.savez('storm_det_slp', storms=storms, year=year, month=month, day=day, hour=hour)
+
+"""
 for tt in range(T):
     #
     print(tt, T)
@@ -108,4 +135,4 @@ for tt in range(T):
     #
         storms = storm.storms_list(lon_storms_a, lat_storms_a, amp_storms_a, lon_storms_c, lat_storms_c, amp_storms_c)
         np.savez('storm_det_slp', storms=storms, year=year, month=month, day=day, hour=hour)
-
+"""

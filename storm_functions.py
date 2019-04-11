@@ -12,6 +12,34 @@ import scipy.ndimage as ndimage
 from datetime import date
 from itertools import repeat
 
+"""
+Robert: 
+
+Added this interpolation routine, it functions by stripping the decimal value
+from the i/j values and then interpolating between the two nearest points along
+the lat/lon
+"""
+def interp_lat_lon(iReal, jReal, lon, lat):
+	iDec = iReal % 1
+	jDec = jReal % 1
+	iInt = int(np.floor(iReal))
+	jInt = int(np.floor(jReal))
+	
+	lonLow = lon[iInt, jInt]
+	lonHigh = lon[iInt + 1, jInt + 1]
+	latLow = lat[iInt, jInt]
+	latHigh = lat[iInt + 1, jInt + 1]
+	
+	difLon = np.abs(lonHigh - lonLow)
+	difLat = np.abs(latHigh - latLow)
+	
+	distLon = difLon * iDec
+	distLat = difLat * jDec
+	
+	trueLon = lonLow + distLon
+	trueLat = latLow + distLat
+	
+	return trueLon, trueLat
 
 def distance_matrix(lons,lats):
     '''Calculates the distances (in km) between any two cities based on the formulas
@@ -40,7 +68,7 @@ def distance_matrix(lons,lats):
     return d
 
 
-def detect_storms(field, lon, lat, res, Npix_min, cyc, globe=False):
+def detect_storms(field, lon, lat, res, Npix_min, cyc):
 	'''
 	Detect storms present in field which satisfy the criteria.
 	Algorithm is an adaptation of an eddy detection algorithm,
@@ -57,25 +85,16 @@ def detect_storms(field, lon, lat, res, Npix_min, cyc, globe=False):
 	cyc = 'cyclonic' or 'anticyclonic' specifies type of system
 	to be detected (cyclonic storm or high-pressure systems)
 
-	globe is an option to detect storms on a globe, i.e. with periodic
-	boundaries in the West/East. Note that if using this option the 
-	supplied longitudes must be positive only (i.e. 0..360 not -180..+180).
-
 	Function outputs lon, lat coordinates of detected storms
 	'''
 	len_deg_lat = 111.325 # length of 1 degree of latitude [km]
 
-    # Need to repeat global field to the West and East to properly detect around the edge
-	if globe:
-		dl = 20. # Degrees longitude to repeat on East and West of edge
-		iEast = np.where(lon >= 360. - dl)[0][0]
-		iWest = np.where(lon <= dl)[0][-1]
-		lon = np.append(lon[iEast:]-360, np.append(lon, lon[:iWest]+360))
-		field = np.append(field[:,iEast:], np.append(field, field[:,:iWest], axis=1), axis=1)
-
 	lon_storms = np.array([])
 	lat_storms = np.array([])
 	amp_storms = np.array([])
+	
+	# Strip out the missing value flag
+	field[field==-9.969209968386869e+36] = np.nan
 
 	# ssh_crits is an array of ssh levels over which to perform storm detection loop
 	# ssh_crits increasing for 'cyclonic', decreasing for 'anticyclonic'
@@ -92,9 +111,8 @@ def detect_storms(field, lon, lat, res, Npix_min, cyc, globe=False):
 			regions, nregions = ndimage.label( (field>ssh_crit).astype(int) )
 		elif cyc == 'cyclonic':
 			regions, nregions = ndimage.label( (field<ssh_crit).astype(int) )
-
-		for iregion in range(nregions):
- 
+		
+		for iregion in range(nregions): 
     # 2. Calculate number of pixels comprising detected region, reject if not within >= Npix_min
 			region = (regions==iregion+1).astype(int)
 			region_Npix = region.sum()
@@ -109,7 +127,7 @@ def detect_storms(field, lon, lat, res, Npix_min, cyc, globe=False):
 				has_internal_ext = field[interior].max() > field[exterior].max()
 			elif cyc == 'cyclonic':
 				has_internal_ext = field[interior].min() < field[exterior].min()
- 
+
     # 4. Find amplitude of region, reject if < amp_thresh
 			if cyc == 'anticyclonic':
 				amp_abs = field[interior].max()
@@ -130,15 +148,16 @@ def detect_storms(field, lon, lat, res, Npix_min, cyc, globe=False):
 				storm_object_with_mass = field * region
 				storm_object_with_mass[np.isnan(storm_object_with_mass)] = 0
 				j_cen, i_cen = ndimage.center_of_mass(storm_object_with_mass)
-				lon_cen = np.interp(i_cen, range(0,len(lon)), lon)
-				lat_cen = np.interp(j_cen, range(0,len(lat)), lat)
+				#lon_cen = np.interp(i_cen, range(0,len(lon)), lon)
+				#lat_cen = np.interp(j_cen, range(0,len(lat)), lat)
+				lon_cen, lat_cen = interp_lat_lon(j_cen, i_cen, lon, lat)
 				# Remove storms detected outside global domain (lon < 0, > 360)
-				if globe * (lon_cen >= 0.) * (lon_cen <= 360.):
-					# Save storm
-					lon_storms = np.append(lon_storms, lon_cen)
-					lat_storms = np.append(lat_storms, lat_cen)
-					# assign (and calculated) amplitude, area, and scale of storms
-					amp_storms = np.append(amp_storms, amp_abs)
+				#if globe * (lon_cen >= 0.) * (lon_cen <= 360.):
+				# Save storm
+				lon_storms = np.append(lon_storms, lon_cen)
+				lat_storms = np.append(lat_storms, lat_cen)
+				# assign (and calculated) amplitude, area, and scale of storms
+				amp_storms = np.append(amp_storms, amp_abs)
 				# remove its interior pixels from further storm detection
 				storm_mask = np.ones(field.shape)
 				storm_mask[interior.astype(int)==1] = np.nan
@@ -235,7 +254,7 @@ def track_storms(storms, det_storms, tt, year, month, day, hour, dt, prop_speed=
 
     # List of unassigned storms at time tt
 
-    unassigned = range(det_storms[tt]['N'])
+    unassigned = list(range(det_storms[tt]['N']))
 
     # For each existing storm (t<tt) loop through unassigned storms and assign to existing storm if appropriate
 
