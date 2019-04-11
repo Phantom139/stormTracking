@@ -67,7 +67,6 @@ def distance_matrix(lons,lats):
 
     return d
 
-
 def detect_storms(field, lon, lat, res, Npix_min, cyc):
 	'''
 	Detect storms present in field which satisfy the criteria.
