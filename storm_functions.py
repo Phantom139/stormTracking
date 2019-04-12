@@ -193,12 +193,12 @@ def storms_init(det_storms, year, month, day, hour):
 
 	storms = []
 
-	for ed in range(det_storms[0]['N']):
+	for ed in range(det_storms[0][0]['N']):
 		storm_tmp = {}
-		storm_tmp['lon'] = np.array([det_storms[0]['lon'][ed]])
-		storm_tmp['lat'] = np.array([det_storms[0]['lat'][ed]])
-		storm_tmp['amp'] = np.array([det_storms[0]['amp'][ed]])
-		storm_tmp['type'] = det_storms[0]['type'][ed]
+		storm_tmp['lon'] = np.array([det_storms[0][0]['lon'][ed]])
+		storm_tmp['lat'] = np.array([det_storms[0][0]['lat'][ed]])
+		storm_tmp['amp'] = np.array([det_storms[0][0]['amp'][ed]])
+		storm_tmp['type'] = det_storms[0][0]['type'][ed]
 		storm_tmp['year'] = np.array([year[0]])
 		storm_tmp['month'] = np.array([month[0]])
 		storm_tmp['day'] = np.array([day[0]])
@@ -241,92 +241,91 @@ def latlon2km(lon1, lat1, lon2, lat2):
 
 
 def track_storms(storms, det_storms, tt, year, month, day, hour, dt, prop_speed=80.):
-    '''
-    Given a set of detected storms as a function of time (det_storms)
-    this function will update tracks of individual storms at time step
-    tt in variable storms
+	'''
+	Given a set of detected storms as a function of time (det_storms)
+	this function will update tracks of individual storms at time step
+	tt in variable storms
 
-    dt indicates the time step of the underlying data (in hours)
+	dt indicates the time step of the underlying data (in hours)
 
-    prop_speed indicates the maximum storm propagation speed (in km/hour)
-    '''
+	prop_speed indicates the maximum storm propagation speed (in km/hour)
+	'''
 
-    # List of unassigned storms at time tt
+	# List of unassigned storms at time tt
+	unassigned = list(range(det_storms[tt][0]['N']))
 
-    unassigned = list(range(det_storms[tt]['N']))
+	# For each existing storm (t<tt) loop through unassigned storms and assign to existing storm if appropriate
 
-    # For each existing storm (t<tt) loop through unassigned storms and assign to existing storm if appropriate
+	for ed in range(len(storms)):
 
-    for ed in range(len(storms)):
+		# Check if storm has already been terminated
 
-        # Check if storm has already been terminated
+		if not storms[ed]['terminated']:
 
-        if not storms[ed]['terminated']:
+			# Define search region around centroid of existing storm ed at last known position
 
-            # Define search region around centroid of existing storm ed at last known position
-    
-            x0 = storms[ed]['lon'][-1] # [deg. lon]
-            y0 = storms[ed]['lat'][-1] # [deg. lat]
-    
-            # Find all storm centroids in search region at time tt
-    
-            is_near = latlon2km(x0, y0, det_storms[tt]['lon'][unassigned], det_storms[tt]['lat'][unassigned]) <= prop_speed*dt
-    
-            # Check if storms' type is the same as original storm
-    
-            is_same_type = np.array([det_storms[tt]['type'][i] == storms[ed]['type'] for i in unassigned])
-    
-            # Possible storms are those which are near and of the same type
-    
-            possibles = is_near * is_same_type
-            if possibles.sum() > 0:
-    
-                # Of all found storms, accept only the nearest one
-    
-                dist = latlon2km(x0, y0, det_storms[tt]['lon'][unassigned], det_storms[tt]['lat'][unassigned])
-                nearest = dist == dist[possibles].min()
-                next_storm = unassigned[np.where(nearest * possibles)[0][0]]
-    
-                # Add coordinatse and properties of accepted storm to trajectory of storm ed
-    
-                storms[ed]['lon'] = np.append(storms[ed]['lon'], det_storms[tt]['lon'][next_storm])
-                storms[ed]['lat'] = np.append(storms[ed]['lat'], det_storms[tt]['lat'][next_storm])
-                storms[ed]['amp'] = np.append(storms[ed]['amp'], det_storms[tt]['amp'][next_storm])
-                storms[ed]['year'] = np.append(storms[ed]['year'], year[tt])
-                storms[ed]['month'] = np.append(storms[ed]['month'], month[tt])
-                storms[ed]['day'] = np.append(storms[ed]['day'], day[tt])
-                storms[ed]['hour'] = np.append(storms[ed]['hour'], hour[tt])
-    
-                # Remove detected storm from list of storms available for assigment to existing trajectories
-    
-                unassigned.remove(next_storm)
+			x0 = storms[ed]['lon'][-1] # [deg. lon]
+			y0 = storms[ed]['lat'][-1] # [deg. lat]
 
-            # Terminate storm otherwise
+			# Find all storm centroids in search region at time tt
 
-            else:
+			is_near = latlon2km(x0, y0, det_storms[tt][0]['lon'][unassigned], det_storms[tt][0]['lat'][unassigned]) <= prop_speed*dt
 
-                storms[ed]['terminated'] = True
+			# Check if storms' type is the same as original storm
 
-    # Create "new storms" from list of storms not assigned to existing trajectories
+			is_same_type = np.array([det_storms[tt][0]['type'][i] == storms[ed]['type'] for i in unassigned])
 
-    if len(unassigned) > 0:
+			# Possible storms are those which are near and of the same type
 
-        for un in unassigned:
+			possibles = is_near * is_same_type
+			if possibles.sum() > 0:
 
-            storm_tmp = {}
-            storm_tmp['lon'] = np.array([det_storms[tt]['lon'][un]])
-            storm_tmp['lat'] = np.array([det_storms[tt]['lat'][un]])
-            storm_tmp['amp'] = np.array([det_storms[tt]['amp'][un]])
-            storm_tmp['type'] = det_storms[tt]['type'][un]
-            storm_tmp['year'] = year[tt]
-            storm_tmp['month'] = month[tt]
-            storm_tmp['day'] = day[tt]
-            storm_tmp['hour'] = hour[tt]
-            storm_tmp['exist_at_start'] = False
-            storm_tmp['terminated'] = False
-            storms.append(storm_tmp)
+				# Of all found storms, accept only the nearest one
 
-    return storms
+				dist = latlon2km(x0, y0, det_storms[tt][0]['lon'][unassigned], det_storms[tt][0]['lat'][unassigned])
+				nearest = dist == dist[possibles].min()
+				next_storm = unassigned[np.where(nearest * possibles)[0][0]]
+
+				# Add coordinatse and properties of accepted storm to trajectory of storm ed
+
+				storms[ed]['lon'] = np.append(storms[ed]['lon'], det_storms[tt][0]['lon'][next_storm])
+				storms[ed]['lat'] = np.append(storms[ed]['lat'], det_storms[tt][0]['lat'][next_storm])
+				storms[ed]['amp'] = np.append(storms[ed]['amp'], det_storms[tt][0]['amp'][next_storm])
+				storms[ed]['year'] = np.append(storms[ed]['year'], year[tt])
+				storms[ed]['month'] = np.append(storms[ed]['month'], month[tt])
+				storms[ed]['day'] = np.append(storms[ed]['day'], day[tt])
+				storms[ed]['hour'] = np.append(storms[ed]['hour'], hour[tt])
+
+				# Remove detected storm from list of storms available for assigment to existing trajectories
+
+				unassigned.remove(next_storm)
+
+				# Terminate storm otherwise
+
+			else:
+
+				storms[ed]['terminated'] = True
+
+	# Create "new storms" from list of storms not assigned to existing trajectories
+
+	if len(unassigned) > 0:
+
+		for un in unassigned:
+
+			storm_tmp = {}
+			storm_tmp['lon'] = np.array([det_storms[tt][0]['lon'][un]])
+			storm_tmp['lat'] = np.array([det_storms[tt][0]['lat'][un]])
+			storm_tmp['amp'] = np.array([det_storms[tt][0]['amp'][un]])
+			storm_tmp['type'] = det_storms[tt][0]['type'][un]
+			storm_tmp['year'] = year[tt]
+			storm_tmp['month'] = month[tt]
+			storm_tmp['day'] = day[tt]
+			storm_tmp['hour'] = hour[tt]
+			storm_tmp['exist_at_start'] = False
+			storm_tmp['terminated'] = False
+			storms.append(storm_tmp)
+
+	return storms
 
 
 def strip_storms(tracked_storms, dt, d_tot_min=1000., d_ratio=0.6, dur_min=72):

@@ -20,16 +20,16 @@ storms = data['storms']
 # Settings
 plotExtent = [-125, -70, 23, 49] # Where to show the plot (LonMin, LonMax, LatMin, LatMax)
 
-def get_projection_object(ncFile):
+def get_projection_object():
     # Cartopy has a "globe" object to define more projection standards, we create this first
     globe = ccrs.Globe(ellipse=None,
                        semimajor_axis=6370000,
                        semiminor_axis=6370000,
                        nadgrids="@null")    
     # Now we can create the projection object
-    cen_lat  = float(ncFile.centerlat)
-    cen_lon  = float(ncFile.centerlon)
-    std_pll  = [ncFile.standardpar1]
+    cen_lat  = float(50.0)
+    cen_lon  = float(-107.0)
+    std_pll  = [50.0]
     cutoff   = -30.0
     projObj = ccrs.LambertConformal(central_latitude=cen_lat, 
                                     central_longitude=cen_lon,
@@ -39,40 +39,36 @@ def get_projection_object(ncFile):
     
     return projObj
 
-def plot_sample(ncFile):
-    # Grab the projection object from the netCDF file
-    projObj = get_projection_object(ncFile)    
-    # Create our figure and axis object
-    fig = plt.figure(figsize=(12,9))
-    ax = plt.axes(projection=projObj)
-    # Note the coordinate flip here, this is because WRF stores N_S first, then E_W
-    lats = ncFile.variables['lat'][:] 
-    lons = ncFile.variables['lon'][:] 
-       
-    clevs = np.arange(980, 1060, 1)
-    clevs2 = np.arange(980, 1060, 4)
-    
-    # Grab the surface temperature from the netCDF file (0th time step, 0th vertical level)
-    MSLP = ncFile.variables["prmsl"][0] / 100
-    
-    ax.set_extent([-125, -70, 23, 49], crs=ccrs.PlateCarree())   
-    
-    # Draw our plot, coastlines first, then the contours.
-    states = cartopy.feature.NaturalEarthFeature(category='cultural',
-                                                name='admin_1_states_provinces_lakes',
-                                                scale='110m',
-                                                facecolor='none')
-    ax.add_feature(states, edgecolor='k')    
-    ax.coastlines()
-    
-    plt.contour(lons, lats, MSLP, clevs2, colors='k', linewidths=1, linestyles='dotted', transform=ccrs.PlateCarree()) #, alpha=0.5, transform=ccrs.PlateCarree())
-    contours = plt.contourf(lons, lats, MSLP, clevs, cmap="jet", transform=ccrs.PlateCarree())
-    plt.colorbar(ax=ax, orientation="horizontal", pad=.05)
-    # Show the plot.
-    plt.show()
-    
-plot_sample(nc1)
+def plot_tracks(stormObj):
+	print(stormObj)
+	# Grab the projection object from the netCDF file
+	projObj = get_projection_object()    
+	# Create our figure and axis object
+	fig = plt.figure(figsize=(12,9))
+	ax = plt.axes(projection=projObj)
 
+	ax.set_extent([-125, -70, 23, 60], crs=ccrs.PlateCarree())   
+
+	# Draw our plot, coastlines first, then the contours.
+	states = cartopy.feature.NaturalEarthFeature(category='cultural',
+												name='admin_1_states_provinces_lakes',
+												scale='110m',
+												facecolor='none')
+	ax.add_feature(states, edgecolor='k')    
+	ax.coastlines()
+
+	for ed in range(len(stormObj)):
+		if (stormObj[ed]['type'] == 'cyclonic'):
+			lon, lat = stormObj[ed]['lon'], stormObj[ed]['lat']
+			plt.plot(lon, lat, 'r-', linewidth=1, alpha=0.35, transform=ccrs.PlateCarree())
+		
+	# Show the plot.
+	plt.title('Storm Tracks')
+	plt.savefig('figures/storm_tracks', bbox_inches='tight', pad_inches=0.05, dpi=300)
+    
+plot_tracks(storms)
+
+"""
 # Plot storm tracks
 
 # Example looking down over the North Pole
@@ -179,3 +175,4 @@ H = plt.colorbar()
 H.set_label('Central pressure [Pa]')
 plt.title('Storms starting in Mar''2010')
 # plt.savefig('figures/storm_CentralPressures_March_1855_2010', bbox_inches='tight', pad_inches=0.05, dpi=300)
+"""
