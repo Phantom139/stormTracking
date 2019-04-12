@@ -240,7 +240,7 @@ def latlon2km(lon1, lat1, lon2, lat2):
     return d
 
 
-def track_storms(storms, det_storms, tt, year, month, day, hour, dt, prop_speed=80.):
+def track_storms(storms, det_storms, tt, year, month, day, hour, dt, prop_speed=160.):
 	'''
 	Given a set of detected storms as a function of time (det_storms)
 	this function will update tracks of individual storms at time step

@@ -14,8 +14,11 @@ import cartopy
 import cartopy.crs as ccrs
 
 # Load storm data
-data = np.load('storm_track_slp.npz')
-storms = data['storms']
+det_storms = np.load('storm_det_slp.npz')
+stormPosn = det_storms['storms']
+
+tracked_storms = np.load('storm_track_slp.npz')
+storms = tracked_storms['storms']
 
 # Settings
 plotExtent = [-125, -70, 23, 49] # Where to show the plot (LonMin, LonMax, LatMin, LatMax)
@@ -39,8 +42,42 @@ def get_projection_object():
     
     return projObj
 
+"""
+Robert: This is a debugging function I used to show the location of the storm points.
+
+def plot_positions(stormObj):
+	# Grab the projection object from the netCDF file
+	projObj = get_projection_object()    
+	# Create our figure and axis object
+	fig = plt.figure(figsize=(12,9))
+	ax = plt.axes(projection=projObj)
+
+	ax.set_extent([-125, -70, 23, 60], crs=ccrs.PlateCarree())   
+
+	# Draw our plot, coastlines first, then the contours.
+	states = cartopy.feature.NaturalEarthFeature(category='cultural',
+												name='admin_1_states_provinces_lakes',
+												scale='110m',
+												facecolor='none')
+	ax.add_feature(states, edgecolor='k')    
+	ax.coastlines()
+
+	unassigned = list(range(stormObj[0][0]['N']))
+	for i in unassigned:
+		lat, lon = stormObj[0][0]['lat'], stormObj[0][0]['lon']
+		plt.plot(lon, lat, 'o', linewidth=1, alpha=0.35, transform=ccrs.PlateCarree())
+	unassigned2 = list(range(stormObj[1][0]['N']))
+	for i in unassigned2:
+		lat, lon = stormObj[1][0]['lat'], stormObj[1][0]['lon']
+		plt.plot(lon, lat, 'ro', linewidth=1, alpha=0.35, transform=ccrs.PlateCarree())		
+	# Show the plot.
+	plt.title('Storm Points')
+	plt.savefig('figures/storm_points', bbox_inches='tight', pad_inches=0.05, dpi=300)			
+	
+plot_positions(stormPosn)
+"""
+	
 def plot_tracks(stormObj):
-	print(stormObj)
 	# Grab the projection object from the netCDF file
 	projObj = get_projection_object()    
 	# Create our figure and axis object

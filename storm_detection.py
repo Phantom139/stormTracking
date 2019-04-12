@@ -99,7 +99,7 @@ T = slp.shape[0]
 totalTime = 0
 print("Size of T: " + str(T))
 processStart = time.time()
-for tS in range(31): #T):
+for tS in range(T):
 	if(tS == 0):
 		print("Processing " + str(tS+1) + "/" + str(T+1))
 	else:
@@ -115,34 +115,9 @@ for tS in range(31): #T):
 	total = timeEnd - timeStart
 	totalTime += total
 	
-	if(tS % 10 == 0 or tS == T-1):
+	if(tS % 50 == 0 or tS == T-1):
 		np.savez('storm_det_slp', storms=bigListStorms, year=year, month=month, day=day, hour=hour)
 processEnd = time.time()
 elapsed = processEnd - processStart
 
 print("Program completed. Total Elapsed Time: " + time.strftime("%H:%M:%S", time.gmtime(elapsed)))
-
-"""
-# Robert: Added this debugging block until I figure out what's going on.
-for tS in range(0, 4):
-	print(tS)
-	#
-	# Detect lon and lat coordinates of storms
-	#
-	lon_storms, lat_storms, amp = storm.detect_storms(slp[tS,:,:], lon, lat, res=2, Npix_min=9, cyc='anticyclonic')
-	lon_storms_a.append(lon_storms)
-	lat_storms_a.append(lat_storms)
-	amp_storms_a.append(amp)
-	#
-	lon_storms, lat_storms, amp = storm.detect_storms(slp[tS,:,:], lon, lat, res=2, Npix_min=9, cyc='cyclonic')
-	lon_storms_c.append(lon_storms)
-	lat_storms_c.append(lat_storms)
-	amp_storms_c.append(amp)
-	#
-	# Save as we go
-	#
-	if tS == 3:
-		print('Save data...')
-		storms = storm.storms_list(lon_storms_a, lat_storms_a, amp_storms_a, lon_storms_c, lat_storms_c, amp_storms_c)
-		np.savez('storm_det_slp', storms=storms, year=year, month=month, day=day, hour=hour)
-"""

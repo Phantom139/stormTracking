@@ -23,11 +23,6 @@ month = data['month']
 day = data['day']
 hour = data['hour']
 
-
-print(year)
-print(month)
-print(day)
-
 # Initialize storms discovered at first time step
 
 storms = storm.storms_init(det_storms, year, month, day, hour)
@@ -35,9 +30,7 @@ storms = storm.storms_init(det_storms, year, month, day, hour)
 # Stitch storm tracks together at future time steps
 
 T = len(det_storms) # number of time steps
-print(T)
 for tt in range(0, T):
-	print(tt, T)
 	# Track storms from time step tt-1 to tt and update corresponding tracks and/or create new storms
 	storms = storm.track_storms(storms, det_storms, tt, year, month, day, hour, dt=3)
 
@@ -47,7 +40,6 @@ for ed in range(len(storms)):
 
 # Strip storms based on track lengths
 storms = storm.strip_storms(storms, dt=3, d_tot_min=0., d_ratio=0., dur_min=12)
-print(storms)
 
 # Save tracked storm data
 np.savez('storm_track_slp', storms=storms)
