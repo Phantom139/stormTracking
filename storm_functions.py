@@ -185,29 +185,29 @@ def storms_list(lon_storms_a, lat_storms_a, amp_storms_a, lon_storms_c, lat_stor
 
 
 def storms_init(det_storms, year, month, day, hour):
-    '''
-    Initializes list of storms. The ith element of output is
-    a dictionary of the ith storm containing information about
-    position and size as a function of time, as well as type.
-    '''
+	'''
+	Initializes list of storms. The ith element of output is
+	a dictionary of the ith storm containing information about
+	position and size as a function of time, as well as type.
+	'''
 
-    storms = []
+	storms = []
 
-    for ed in range(det_storms[0]['N']):
-        storm_tmp = {}
-        storm_tmp['lon'] = np.array([det_storms[0]['lon'][ed]])
-        storm_tmp['lat'] = np.array([det_storms[0]['lat'][ed]])
-        storm_tmp['amp'] = np.array([det_storms[0]['amp'][ed]])
-        storm_tmp['type'] = det_storms[0]['type'][ed]
-        storm_tmp['year'] = np.array([year[0]])
-        storm_tmp['month'] = np.array([month[0]])
-        storm_tmp['day'] = np.array([day[0]])
-        storm_tmp['hour'] = np.array([hour[0]])
-        storm_tmp['exist_at_start'] = True
-        storm_tmp['terminated'] = False
-        storms.append(storm_tmp)
+	for ed in range(det_storms[0]['N']):
+		storm_tmp = {}
+		storm_tmp['lon'] = np.array([det_storms[0]['lon'][ed]])
+		storm_tmp['lat'] = np.array([det_storms[0]['lat'][ed]])
+		storm_tmp['amp'] = np.array([det_storms[0]['amp'][ed]])
+		storm_tmp['type'] = det_storms[0]['type'][ed]
+		storm_tmp['year'] = np.array([year[0]])
+		storm_tmp['month'] = np.array([month[0]])
+		storm_tmp['day'] = np.array([day[0]])
+		storm_tmp['hour'] = np.array([hour[0]])
+		storm_tmp['exist_at_start'] = True
+		storm_tmp['terminated'] = False
+		storms.append(storm_tmp)
 
-    return storms
+	return storms
 
 
 def len_deg_lon(lat):

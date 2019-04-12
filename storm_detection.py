@@ -19,7 +19,7 @@ import time
 import storm_functions as storm
 
 # Helper function
-def run_detection(tS, slp, lon, lat, tList):	
+def run_detection(tS, slp, lon, lat):	
 	lon_storms_a = []
 	lat_storms_a = []
 	amp_storms_a = []
@@ -38,7 +38,7 @@ def run_detection(tS, slp, lon, lat, tList):
 	amp_storms_c.append(amp)
 	# Write out
 	storms = storm.storms_list(lon_storms_a, lat_storms_a, amp_storms_a, lon_storms_c, lat_storms_c, amp_storms_c)
-	tList.append(storms)
+	return storms
 
 #
 # Load in slp data and lat/lon coordinates
@@ -94,29 +94,31 @@ for yr in range(yearStart, yearEnd+1):
 
 
 # Loop over time
-stormList = []
 T = slp.shape[0]
 totalTime = 0
 print("Size of T: " + str(T))
+processStart = time.time()
 for tS in range(T):
 	if(tS == 0):
 		print("Processing " + str(tS+1) + "/" + str(T+1))
 	else:
 		avg = totalTime / (tS+1)
 		est = avg * (T - tS)
-		print("Processing " + str(tS+1) + "/" + str(T+1) + ": Last Step: " + '{0:.2f}'.format(total) + "s, Avg. Time: " + '{0:.2f}'.format(avg) + "s, Est. Time Left: " + '{0:.2f}'.format(est) + "s")
+		print("Processing " + str(tS+1) + "/" + str(T+1) + ": Last Step: " + '{0:.2f}'.format(total) + "s, Avg. Time: " + '{0:.2f}'.format(avg) + "s, Est. Time Left: " + time.strftime("%H:%M:%S", est))
 		
 	timeStart = time.time()
-	run_detection(tS, slp, lon, lat, stormList)
+	storms = run_detection(tS, slp, lon, lat)
 	timeEnd = time.time()
 	
 	total = timeEnd - timeStart
 	totalTime += total
 	
 	if(tS % 10 == 0 or tS == T-1):
-		np.savez('storm_det_slp', storms=stormList, year=year, month=month, day=day, hour=hour)
+		np.savez('storm_det_slp', storms=storms, year=year, month=month, day=day, hour=hour)
+processEnd = time.time()
+elapsed = processEnd - processStart
 
-print("Program completed")
+print("Program completed. Total Elapsed Time: " + time.strftime("%H:%M:%S", elapsed))
 
 """
 # Robert: Added this debugging block until I figure out what's going on.
