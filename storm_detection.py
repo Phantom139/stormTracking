@@ -98,10 +98,13 @@ for yr in range(yearStart, yearEnd+1):
 # Loop over time
 bigListStorms = []
 T = slp.shape[0]
+
+#t = ThreadPool(processes=6)
+
 totalTime = 0
 print("Size of T: " + str(T))
 processStart = time.time()
-for tS in range(500): #T):
+for tS in range(T):
 	if(tS == 0):
 		print("Processing " + str(tS+1) + "/" + str(T+1))
 	else:
