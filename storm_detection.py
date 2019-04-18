@@ -43,6 +43,7 @@ def run_detection(tS, slp, lon, lat):
 #
 # Load in slp data and lat/lon coordinates
 #
+print("Program Start...")
 
 # Parameters
 ## NOTE: MAKE SURE YOU EDIT THIS LINE!!!!
@@ -63,18 +64,27 @@ yearEnd = 2018 #2018
 filename = {'NARR_PRMSL': dataDir + 'prmsl.' + str(yearStart) + '.nc',
             'NARR_PRES_SFC': dataDir + 'pres.sfc.' + str(yearStart) + '.nc',
             'NARR_MSLET': dataDir + 'mslet.' + str(yearStart) + '.nc'}
+			
+print("Loading in first netCDF file to populate arrays... " + str(filename[dataset]))
 fileobj = Dataset(filename[dataset], 'r')
 lon = fileobj.variables['lon'][:].astype(float)
 lat = fileobj.variables['lat'][:].astype(float)
 fileobj.close()
 
+bigListStorms = []
+
 # Load slp data
-slp = np.zeros((0, lat.shape[0], lat.shape[1]))
-year = np.zeros((0,))
-month = np.zeros((0,))
-day = np.zeros((0,))
-hour = np.zeros((0,))
+print("Entering loop, beginning timer.")
+processStart = time.time()
+totalTime = 0
 for yr in range(yearStart, yearEnd+1):
+	# Create empty arrays to hold the data
+	slp = np.zeros((0, lat.shape[0], lat.shape[1]))
+	year = np.zeros((0,))
+	month = np.zeros((0,))
+	day = np.zeros((0,))
+	hour = np.zeros((0,))
+
 	filename = {'NARR_PRMSL': dataDir + 'prmsl.' + str(yr) + '.nc',
 				'NARR_PRES_SFC': dataDir + 'pres.sfc.' + str(yr) + '.nc',
 				'NARR_MSLET': dataDir + 'mslet.' + str(yr) + '.nc'}
@@ -86,43 +96,33 @@ for yr in range(yearStart, yearEnd+1):
 	day = np.append(day, [date.fromordinal(np.floor(time_ordinalDays[tt]).astype(int)).day for tt in range(len(timeAr))])
 	hour = np.append(hour, (np.mod(time_ordinalDays, 1)*24).astype(int))
 	slp0 = fileobj.variables[var[dataset]][:].astype(float)
-	slp = np.append(slp, slp0, axis=0)
+	#slp = np.append(slp, slp0, axis=0)
 	fileobj.close()
-	print(yr)
+	print("Begin processing for " + str(yr))
+	
+	T = slp0.shape[0]
+	print("Size of T for " + str(yr) + ": " + str(T))
+	ytStart = time.time()
+	for tS in range(T):
+		if(tS == 0):
+			print("Processing " + str(tS+1) + "/" + str(T+1))
+		else:
+			avg = totalTime / (tS+1)
+			est = avg * (T - tS)
+			print("Processing " + str(tS+1) + "/" + str(T+1) + ": Last Step: " + '{0:.2f}'.format(total) + "s, Avg. Time: " + '{0:.2f}'.format(avg) 
+			    + "s, Est. Time Left (" + str(yr) + "): " + time.strftime("%H:%M:%S", time.gmtime(est)))
+		timeStart = time.time()
+		storms = run_detection(tS, slp0, lon, lat)
+		bigListStorms.append(storms)
+		timeEnd = time.time()
 
-#
-# Storm Detection
-#
-
-
-# Loop over time
-bigListStorms = []
-T = slp.shape[0]
-
-#t = ThreadPool(processes=6)
-
-totalTime = 0
-print("Size of T: " + str(T))
-processStart = time.time()
-for tS in range(T):
-	if(tS == 0):
-		print("Processing " + str(tS+1) + "/" + str(T+1))
-	else:
-		avg = totalTime / (tS+1)
-		est = avg * (T - tS)
-		print("Processing " + str(tS+1) + "/" + str(T+1) + ": Last Step: " + '{0:.2f}'.format(total) + "s, Avg. Time: " + '{0:.2f}'.format(avg) + "s, Est. Time Left: " + time.strftime("%H:%M:%S", time.gmtime(est)))
+		total = timeEnd - timeStart
+		totalTime += total
 		
-	timeStart = time.time()
-	storms = run_detection(tS, slp, lon, lat)
-	bigListStorms.append(storms)
-	timeEnd = time.time()
-	
-	total = timeEnd - timeStart
-	totalTime += total
-	
-	if(tS % 50 == 0 or tS == T-1):
-		np.savez('storm_det_slp', storms=bigListStorms, year=year, month=month, day=day, hour=hour)
-processEnd = time.time()
+		if(tS % 500 == 0 or tS == T-1):
+			np.savez('storm_det_slp', storms=bigListStorms, year=year, month=month, day=day, hour=hour)	
+	ytEnd = time.time()
+	print("Processing completed for " + str(yr) + "... Elapsed Time: " + time.strftime("%H:%M:%S", time.gmtime(ytEnd - ytStart)))
+processEnd = time.time()	
 elapsed = processEnd - processStart
-
-print("Program completed. Total Elapsed Time: " + time.strftime("%H:%M:%S", time.gmtime(elapsed)))
+print("Program completed. Total Elapsed Time: " + time.strftime("%H:%M:%S", time.gmtime(elapsed)))	
