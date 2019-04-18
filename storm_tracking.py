@@ -38,8 +38,8 @@ for tt in range(0, T):
 for ed in range(len(storms)):
     storms[ed]['age'] = len(storms[ed]['lon'])
 
-# Strip storms based on track lengths
-storms = storm.strip_storms(storms, dt=3, d_tot_min=0., d_ratio=0., dur_min=12)
+# Strip storms based on track lengths (dt = 3hr, d_tot_min = 500km, dur_min = 24hr)
+storms = storm.strip_storms(storms, dt=3, d_tot_min=500., d_ratio=0.6, dur_min=24)
 
 # Save tracked storm data
 np.savez('storm_track_slp', storms=storms)

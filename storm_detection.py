@@ -45,9 +45,11 @@ def run_detection(tS, slp, lon, lat):
 #
 
 # Parameters
+## NOTE: MAKE SURE YOU EDIT THIS LINE!!!!
+## THIS IS WHERE THE PROGRAM WILL LOOK FOR DATA
 dataDir = 'D:/Robert Docs/College/NIU/GEOG 790 (SP 19)/Project/data/'
 
-dataset = 'NARR_PRMSL'
+dataset = 'NARR_MSLET'
 			
 var = {'NARR_PRMSL': 'prmsl', 
 	   'NARR_PRES_SFC': 'pres',
@@ -55,7 +57,7 @@ var = {'NARR_PRMSL': 'prmsl',
 
 # Generate date and hour vectors
 yearStart = 1979
-yearEnd = 1979 #2018
+yearEnd = 2018 #2018
 
 # Load lat, lon
 filename = {'NARR_PRMSL': dataDir + 'prmsl.' + str(yearStart) + '.nc',
@@ -99,7 +101,7 @@ T = slp.shape[0]
 totalTime = 0
 print("Size of T: " + str(T))
 processStart = time.time()
-for tS in range(T):
+for tS in range(500): #T):
 	if(tS == 0):
 		print("Processing " + str(tS+1) + "/" + str(T+1))
 	else:

@@ -83,7 +83,7 @@ def plot_tracks(stormObj):
 	# Create our figure and axis object
 	fig = plt.figure(figsize=(12,9))
 	ax = plt.axes(projection=projObj)
-
+	#ax = plt.axes(projection=ccrs.PlateCarree())
 	ax.set_extent([-125, -70, 23, 60], crs=ccrs.PlateCarree())   
 
 	# Draw our plot, coastlines first, then the contours.
@@ -97,9 +97,17 @@ def plot_tracks(stormObj):
 	for ed in range(len(stormObj)):
 		if (stormObj[ed]['type'] == 'cyclonic'):
 			lon, lat = stormObj[ed]['lon'], stormObj[ed]['lat']
+			
+			lon[lon <  0] = 360 + lon[lon < 0]
+			
 			plt.plot(lon, lat, 'r-', linewidth=1, alpha=0.35, transform=ccrs.PlateCarree())
+			plt.plot(lon[0], lat[0], 'bo', alpha=0.5, markeredgewidth=0, transform=ccrs.PlateCarree())
+			plt.plot(lon[-1], lat[-1], 'ro', alpha=0.5, markeredgewidth=0, transform=ccrs.PlateCarree())
 		
 	# Show the plot.
+	plt.plot(0, 0, 'bo', alpha=1, markeredgewidth=0, transform=ccrs.PlateCarree(), label="Cyclogenesis")
+	plt.plot(0, 0, 'ro', alpha=1, markeredgewidth=0, transform=ccrs.PlateCarree(), label="Cyclosis")
+	plt.legend()
 	plt.title('Storm Tracks')
 	plt.savefig('figures/storm_tracks', bbox_inches='tight', pad_inches=0.05, dpi=300)
     

@@ -239,8 +239,8 @@ def latlon2km(lon1, lat1, lon2, lat2):
 
     return d
 
-
-def track_storms(storms, det_storms, tt, year, month, day, hour, dt, prop_speed=160.):
+# Robert Note: Manipulating the prop_speed argument will control the search radius
+def track_storms(storms, det_storms, tt, year, month, day, hour, dt, prop_speed=140.):
 	'''
 	Given a set of detected storms as a function of time (det_storms)
 	this function will update tracks of individual storms at time step
