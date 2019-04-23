@@ -42,9 +42,6 @@ def get_projection_object():
     
     return projObj
 
-"""
-Robert: This is a debugging function I used to show the location of the storm points.
-
 def plot_positions(stormObj):
 	# Grab the projection object from the netCDF file
 	projObj = get_projection_object()    
@@ -73,9 +70,6 @@ def plot_positions(stormObj):
 	# Show the plot.
 	plt.title('Storm Points')
 	plt.savefig('figures/storm_points', bbox_inches='tight', pad_inches=0.05, dpi=300)			
-	
-plot_positions(stormPosn)
-"""
 	
 def plot_tracks(stormObj):
 	# Grab the projection object from the netCDF file
@@ -111,6 +105,46 @@ def plot_tracks(stormObj):
 	plt.title('Storm Tracks')
 	plt.savefig('figures/storm_tracks', bbox_inches='tight', pad_inches=0.05, dpi=300)
     
+def plot_track_mean(stormObj, months='A', years='A', cyclones_to_include = 'A'):
+	monthList = []
+	yearList = []
+	cycloneList = []
+	
+	if months == 'A':
+		monthList = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+	else:
+		monthList = months
+	
+	if years == 'A':
+		yearList = np.arange(1979, 2019, 1)
+	else:
+		yearList = years
+		
+	if cyclones_to_include == 'A':
+		cycloneList = ['Clipper', 'Colorado', 'Other']
+	else:
+		cycloneList = cyclones_to_include
+		
+	"""
+	Robert Notes for Group:
+		- The above creates a template listable call where you can pass a list of months, years, and cyclone types
+		   to be saved in a list instance. As we're dealing with loop iteration we can take advantage of python's
+		   list membership capability to make testing easy, here's an example:
+		   
+	# Make these first two lines a "standard" practice.
+	for ed in range(len(stormObj)):
+		if (stormObj[ed]['type'] == 'cyclonic'):
+			# Test months
+			if(storms[ed]['month'][0] in monthList):
+				# Test years
+				if(storms[ed]['year'][0] in yearList):
+					# Test classification
+					if(storms[ed]['classification'] in cycloneList):
+						# Anything inside this if statement will have met all three of the above conditions.
+	"""
+	
+# List of function calls, uncomment out the plots you want
+#plot_positions(stormPosn)
 plot_tracks(storms)
 
 """

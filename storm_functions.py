@@ -11,6 +11,7 @@ import scipy as sp
 import scipy.ndimage as ndimage
 from datetime import date
 from itertools import repeat
+import matplotlib.path as mplPath
 
 """
 Robert: 
@@ -365,7 +366,60 @@ def strip_storms(tracked_storms, dt, d_tot_min=1000., d_ratio=0.6, dur_min=72):
 
     return stripped_storms
 
-
+def classify_storms(tracked_storms):
+	'''
+	Robert: This function classifies storms based on the condition that they form inside a bounding area
+	 and terminate outside of the formation area. At this moment we have supporting literature for
+	 Alberta Clippers and Colorado Lows. Remaining cyclones are classified as "other"
+	'''
+	clipper_zone = [[-125.235,59.546],
+					[-124.21,58.944],
+					[-123.971,57.915],
+					[-122.599,56.658],
+					[-120.673,54.937],
+					[-118.162,53.692],
+					[-115.374,51.795],
+					[-114.546,49.72],
+					[-112.612,47.477],
+					[-104.048,47.126],
+					[-104.277, 51.929],
+					[-104.277,57.915],
+					[-104.277,59.546]]
+	colorado_zone = [[-105, 40],
+					[-100,40],
+					[-100,35],
+					[-105,35]]
+					
+	clipperPoly = mplPath.Path(clipper_zone)
+	coloradoPoly = mplPath.Path(colorado_zone)
+					
+	print(tracked_storms)
+					
+	classified_storms = []
+	
+	for ed in range(len(tracked_storms)):
+		start_lon = tracked_storms[ed]['lon'][0]
+		start_lat = tracked_storms[ed]['lat'][0]
+		end_lon = tracked_storms[ed]['lon'][-1]
+		end_lat = tracked_storms[ed]['lat'][-1]
+		
+		startPoint = (start_lon, start_lat)
+		endPoint = (end_lon, end_lat)
+		print(startPoint)
+		print(endPoint)
+		if clipperPoly.contains_point(startPoint, radius=1e-9) and not clipperPoly.contains_point(endPoint, radius=1e-9):
+			tracked_storms[ed]['classification'] = "Clipper"
+		elif coloradoPoly.contains_point(startPoint, radius=1e-9) and not coloradoPoly.contains_point(endPoint, radius=1e-9):
+			tracked_storms[ed]['classification'] = "Colorado"
+		else:
+			tracked_storms[ed]['classification'] = "Other"
+		
+		classified_storms.append(tracked_storms[ed])
+	
+	print(classified_storms)
+	
+	return classified_storms
+	
 def timevector(date_start, date_end):
     '''
     Generated daily time vector, along with year, month, day, day-of-year,

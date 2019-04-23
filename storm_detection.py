@@ -76,8 +76,8 @@ bigListStorms = []
 # Load slp data
 print("Entering loop, beginning timer.")
 processStart = time.time()
-totalTime = 0
 for yr in range(yearStart, yearEnd+1):
+	totalTime = 0
 	# Create empty arrays to hold the data
 	slp = np.zeros((0, lat.shape[0], lat.shape[1]))
 	year = np.zeros((0,))
