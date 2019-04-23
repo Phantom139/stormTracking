@@ -393,8 +393,6 @@ def classify_storms(tracked_storms):
 	clipperPoly = mplPath.Path(clipper_zone)
 	coloradoPoly = mplPath.Path(colorado_zone)
 					
-	print(tracked_storms)
-					
 	classified_storms = []
 	
 	for ed in range(len(tracked_storms)):
@@ -405,8 +403,6 @@ def classify_storms(tracked_storms):
 		
 		startPoint = (start_lon, start_lat)
 		endPoint = (end_lon, end_lat)
-		print(startPoint)
-		print(endPoint)
 		if clipperPoly.contains_point(startPoint, radius=1e-9) and not clipperPoly.contains_point(endPoint, radius=1e-9):
 			tracked_storms[ed]['classification'] = "Clipper"
 		elif coloradoPoly.contains_point(startPoint, radius=1e-9) and not coloradoPoly.contains_point(endPoint, radius=1e-9):
@@ -415,8 +411,6 @@ def classify_storms(tracked_storms):
 			tracked_storms[ed]['classification'] = "Other"
 		
 		classified_storms.append(tracked_storms[ed])
-	
-	print(classified_storms)
 	
 	return classified_storms
 	
