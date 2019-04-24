@@ -105,7 +105,7 @@ def plot_tracks(stormObj):
 	plt.title('Storm Tracks')
 	plt.savefig('figures/storm_tracks', bbox_inches='tight', pad_inches=0.05, dpi=300)
     
-def plot_track_mean(stormObj, months='A', years='A', cyclones_to_include = 'A'):
+def plot_frequency(stormObj, months='A', years='A', cyclones_to_include = 'A'):
 	monthList = []
 	yearList = []
 	cycloneList = []
@@ -124,6 +124,10 @@ def plot_track_mean(stormObj, months='A', years='A', cyclones_to_include = 'A'):
 		cycloneList = ['Clipper', 'Colorado', 'Other']
 	else:
 		cycloneList = cyclones_to_include
+		
+	lonRange = np.linspace(plotExtent[0], plotExtent[1], 200)
+	latRange = np.linspace(plotExtent[2], plotExtent[3], 200)
+	lons, lats = np.meshgrid(lonRange, latRange)
 		
 	"""
 	Robert Notes for Group:

@@ -16,12 +16,15 @@ import storm_functions as storm
 
 # Load in detected positions and date/hour information
 filename = 'D:/Robert Docs/College/NIU/GEOG 790 (SP 19)/Project/stormTracking/storm_det_slp'
-data = np.load(filename + '.npz')
+data = np.load(filename + '.npz', encoding='latin1')
 det_storms = data['storms']
 year = data['year']
 month = data['month']
 day = data['day']
 hour = data['hour']
+
+print(det_storms.shape)
+print(year.shape)
 
 # Initialize storms discovered at first time step
 
@@ -46,4 +49,3 @@ storms = storm.strip_storms(storms, dt=3, d_tot_min=500., d_ratio=0.6, dur_min=2
 
 # Save tracked storm data
 np.savez('storm_track_slp', storms=storms)
-
