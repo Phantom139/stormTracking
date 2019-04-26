@@ -372,26 +372,45 @@ def classify_storms(tracked_storms):
 	 and terminate outside of the formation area. At this moment we have supporting literature for
 	 Alberta Clippers and Colorado Lows. Remaining cyclones are classified as "other"
 	'''
-	clipper_zone = [[-125.235,59.546],
-					[-124.21,58.944],
-					[-123.971,57.915],
-					[-122.599,56.658],
-					[-120.673,54.937],
-					[-118.162,53.692],
-					[-115.374,51.795],
-					[-114.546,49.72],
-					[-112.612,47.477],
-					[-104.048,47.126],
-					[-104.277, 51.929],
-					[-104.277,57.915],
-					[-104.277,59.546]]
+	clipper_zone = [[-115,50],
+					[-105,50],
+					[-105,55],
+					[-110,55],
+					[-110,60],
+					[-125,60],
+					[-125,55],
+					[-115,55]]
+	northwst_zone = [[-125, 60],
+					[-115,60],
+					[-115,65],
+					[-125,65]]
 	colorado_zone = [[-105, 40],
 					[-100,40],
 					[-100,35],
 					[-105,35]]
+	basin_zone = 	[[-120, 45],
+					[-115,45],
+					[-115,35],
+					[-120,35]]
+	gom_zone =      [[-100, 25],
+					[-90,25],
+					[-90,30],
+					[-100,30]]
+	eastcst_zone =  [[-80, 30],
+					[-75,30],
+					[-75,35],
+					[-65,35],
+					[-65,45],
+					[-70,45],
+					[-70,40],
+					[-80,40]]
 					
 	clipperPoly = mplPath.Path(clipper_zone)
+	northwestPoly = mplPath.Path(northwst_zone)
 	coloradoPoly = mplPath.Path(colorado_zone)
+	basinPoly = mplPath.Path(basin_zone)
+	gomPoly = mplPath.Path(gom_zone)
+	eastCoastPoly = mplPath.Path(eastcst_zone)
 					
 	classified_storms = []
 	
@@ -405,14 +424,33 @@ def classify_storms(tracked_storms):
 		endPoint = (end_lon, end_lat)
 		if clipperPoly.contains_point(startPoint, radius=1e-9) and not clipperPoly.contains_point(endPoint, radius=1e-9):
 			tracked_storms[ed]['classification'] = "Clipper"
+		elif northwestPoly.contains_point(startPoint, radius=1e-9) and not northwestPoly.contains_point(endPoint, radius=1e-9):
+			tracked_storms[ed]['classification'] = "Northwest"			
 		elif coloradoPoly.contains_point(startPoint, radius=1e-9) and not coloradoPoly.contains_point(endPoint, radius=1e-9):
 			tracked_storms[ed]['classification'] = "Colorado"
+		elif basinPoly.contains_point(startPoint, radius=1e-9) and not basinPoly.contains_point(endPoint, radius=1e-9):
+			tracked_storms[ed]['classification'] = "GreatBasin"
+		elif gomPoly.contains_point(startPoint, radius=1e-9) and not gomPoly.contains_point(endPoint, radius=1e-9):
+			tracked_storms[ed]['classification'] = "GulfOfMexico"
+		elif eastCoastPoly.contains_point(startPoint, radius=1e-9) and not eastCoastPoly.contains_point(endPoint, radius=1e-9):
+			tracked_storms[ed]['classification'] = "EastCoast"			
 		else:
 			tracked_storms[ed]['classification'] = "Other"
 		
 		classified_storms.append(tracked_storms[ed])
 	
 	return classified_storms
+	
+# Robert: Added function to calculate Bergeron value for cyclones
+def calculate_bergeron(stormObject):
+	bergeronList = []
+	for i in range(len(stormObject['amp'])):
+		pressures = stormObject['amp'][i:i+8]
+		diffs = np.diff(pressures) / 100 #Convert Pa to mb
+		negatives = np.sum(val for val in diffs if val < 0)
+		bFactor = (-1 * np.sum(negatives)) / (24) # Robert Note: The 24 in here is the mb fall (Note the paper on correction later.
+		bergeronList.append(bFactor)
+	return bergeronList
 	
 def timevector(date_start, date_end):
     '''
