@@ -10,8 +10,8 @@ print("Program start")
 
 import storm_functions as storm
 
-filename = 'D:/Robert Docs/College/NIU/GEOG 790 (SP 19)/Project/stormTracking/storm_det_slp'
-data = np.load(filename + '.npz', encoding='latin1')
+filename = 'D:/Robert Docs/College/NIU/GEOG 790 (SP 19)/Project/stormTracking/storm_det_slp_patched'
+data = np.load(filename + '.npz', encoding='latin1', allow_pickle=True)
 bigListStorms = data['storms']
 bigListYear=[]
 bigListMonth=[]
@@ -29,4 +29,4 @@ for yr in data['hour']:
 	
 print(bigListYear)	
 
-np.savez('storm_det_slp_patched', storms=bigListStorms, year=bigListYear, month=bigListMonth, day=bigListDay, hour=bigListHour)	
+np.savez('storm_det_slp_patched_2', storms=bigListStorms, year=bigListYear, month=bigListMonth, day=bigListDay, hour=bigListHour)	

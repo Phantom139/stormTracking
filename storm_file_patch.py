@@ -11,7 +11,7 @@ print("Program start")
 import storm_functions as storm
 
 filename = 'D:/Robert Docs/College/NIU/GEOG 790 (SP 19)/Project/stormTracking/storm_det_slp'
-data = np.load(filename + '.npz', encoding='latin1')
+data = np.load(filename + '.npz', encoding='latin1', allow_pickle=True)
 bigListStorms = data['storms']
 bigListYear=[]
 bigListMonth=[]
@@ -28,7 +28,7 @@ var = {'NARR_PRMSL': 'prmsl',
 
 # Generate date and hour vectors
 yearStart = 1979
-yearEnd = 2018 #2018
+yearEnd = 2020 #2018
 
 filename = {'NARR_PRMSL': dataDir + 'prmsl.' + str(yearStart) + '.nc',
             'NARR_PRES_SFC': dataDir + 'pres.sfc.' + str(yearStart) + '.nc',

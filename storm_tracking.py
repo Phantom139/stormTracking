@@ -18,7 +18,7 @@ print("Program Start...")
 
 # Load in detected positions and date/hour information
 filename = 'D:/Robert Docs/College/NIU/GEOG 790 (SP 19)/Project/stormTracking/storm_det_slp'
-data = np.load(filename + '.npz', encoding='latin1')
+data = np.load(filename + '.npz', encoding='latin1', allow_pickle=True)
 det_storms = data['storms']
 year = data['year']
 month = data['month']

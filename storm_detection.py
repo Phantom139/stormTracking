@@ -14,12 +14,14 @@ from netCDF4 import Dataset
 import multiprocessing
 from functools import partial
 from matplotlib import pyplot as plt
+import os
+import storm_functions as storm
+import itertools
 import time
 
-import storm_functions as storm
-
 # Helper function
-def run_detection(tS, slp, lon, lat):	
+def run_detection(slp, idx, size, lon, lat):	
+	processStart = time.time()
 	lon_storms_a = []
 	lat_storms_a = []
 	amp_storms_a = []
@@ -27,18 +29,20 @@ def run_detection(tS, slp, lon, lat):
 	lat_storms_c = []
 	amp_storms_c = []	
 	# anti-cyclones
-	lon_storms, lat_storms, amp = storm.detect_storms(slp[tS,:,:], lon, lat, res=2, Npix_min=9, cyc='anticyclonic')
+	lon_storms, lat_storms, amp = storm.detect_storms(slp, lon, lat, res=2, Npix_min=9, cyc='anticyclonic')
 	lon_storms_a.append(lon_storms)
 	lat_storms_a.append(lat_storms)
 	amp_storms_a.append(amp)
 	# cyclones
-	lon_storms, lat_storms, amp = storm.detect_storms(slp[tS,:,:], lon, lat, res=2, Npix_min=9, cyc='cyclonic')
+	lon_storms, lat_storms, amp = storm.detect_storms(slp, lon, lat, res=2, Npix_min=9, cyc='cyclonic')
 	lon_storms_c.append(lon_storms)
 	lat_storms_c.append(lat_storms)
 	amp_storms_c.append(amp)
 	# Write out
 	storms = storm.storms_list(lon_storms_a, lat_storms_a, amp_storms_a, lon_storms_c, lat_storms_c, amp_storms_c)
-	return storms
+	processEnd = time.time()
+	print("Time step completed (" + str(idx) + " / " + str(size) + "), Elapsed Time: " + time.strftime("%H:%M:%S", time.gmtime(processEnd - processStart)))
+	return {idx: storms}
 
 #
 # Load in slp data and lat/lon coordinates
@@ -48,7 +52,7 @@ print("Program Start...")
 # Parameters
 ## NOTE: MAKE SURE YOU EDIT THIS LINE!!!!
 ## THIS IS WHERE THE PROGRAM WILL LOOK FOR DATA
-dataDir = 'D:/Robert Docs/College/NIU/GEOG 790 (SP 19)/Project/data/'
+dataDir = '/media/robert/HDD2/790Project/Data/' #'D:/Robert Docs/College/NIU/GEOG 790 (SP 19)/Project/data/'
 
 dataset = 'NARR_MSLET'
 			
@@ -57,8 +61,8 @@ var = {'NARR_PRMSL': 'prmsl',
 	   'NARR_MSLET': 'mslet'}
 
 # Generate date and hour vectors
-yearStart = 1979
-yearEnd = 2018 #2018
+yearStart = 1979 # 1979
+yearEnd = 2020 #2018
 
 # Load lat, lon
 filename = {'NARR_PRMSL': dataDir + 'prmsl.' + str(yearStart) + '.nc',
@@ -73,17 +77,24 @@ fileobj.close()
 
 bigListStorms = []
 
-# Load slp data
+print("Spawning a multiprocessing pool, " + str(os.cpu_count()) + " processors detected.")
+pool = multiprocessing.Pool(os.cpu_count())
+
 print("Entering loop, beginning timer.")
-processStart = time.time()
+fullStart = time.time()
+yListTime = []
+
+# Create empty arrays to hold the data
+year = np.zeros((0,))
+month = np.zeros((0,))
+day = np.zeros((0,))
+hour = np.zeros((0,))
+
 for yr in range(yearStart, yearEnd+1):
-	totalTime = 0
-	# Create empty arrays to hold the data
-	slp = np.zeros((0, lat.shape[0], lat.shape[1]))
-	year = np.zeros((0,))
-	month = np.zeros((0,))
-	day = np.zeros((0,))
-	hour = np.zeros((0,))
+	save_storms = {}
+	current_list_storms = []
+
+	innerTimeStart = time.time()
 
 	filename = {'NARR_PRMSL': dataDir + 'prmsl.' + str(yr) + '.nc',
 				'NARR_PRES_SFC': dataDir + 'pres.sfc.' + str(yr) + '.nc',
@@ -96,33 +107,31 @@ for yr in range(yearStart, yearEnd+1):
 	day = np.append(day, [date.fromordinal(np.floor(time_ordinalDays[tt]).astype(int)).day for tt in range(len(timeAr))])
 	hour = np.append(hour, (np.mod(time_ordinalDays, 1)*24).astype(int))
 	slp0 = fileobj.variables[var[dataset]][:].astype(float)
-	#slp = np.append(slp, slp0, axis=0)
 	fileobj.close()
-	print("Begin processing for " + str(yr))
 	
-	T = slp0.shape[0]
-	print("Size of T for " + str(yr) + ": " + str(T))
-	ytStart = time.time()
-	for tS in range(T):
-		if(tS == 0):
-			print("Processing " + str(tS+1) + "/" + str(T+1))
-		else:
-			avg = totalTime / (tS+1)
-			est = avg * (T - tS)
-			print("Processing " + str(tS+1) + "/" + str(T+1) + ": Last Step: " + '{0:.2f}'.format(total) + "s, Avg. Time: " + '{0:.2f}'.format(avg) 
-			    + "s, Est. Time Left (" + str(yr) + "): " + time.strftime("%H:%M:%S", time.gmtime(est)))
-		timeStart = time.time()
-		storms = run_detection(tS, slp0, lon, lat)
-		bigListStorms.append(storms)
-		timeEnd = time.time()
+	# Run the multiprocessed detection function, merge the returned dictionary object with our local one.
+	out_dict = pool.starmap(run_detection, zip(slp0, np.arange(slp0.shape[0]), itertools.repeat(slp0.shape[0]), itertools.repeat(lon), itertools.repeat(lat)))
+	ro_inner = time.time()
+	for iDict in out_dict: #Note: starmap returns as a 0-length list ie [return] with the Nth element being each input
+		save_storms = {**save_storms, **iDict} 
+	# Order the final list correctly
+	for i in range(slp0.shape[0]):
+		current_list_storms.append(save_storms[i])
+	ro_outer = time.time() - ro_inner
+	print(str(yr) + " List Reordering Completed, Elapsed Time: " + time.strftime("%H:%M:%S", time.gmtime(ro_outer)))
+	# Append to the big list, then save.
+	bigListStorms.append(current_list_storms)
+	innerTimeEnd = time.time()
+	yListTime.append((innerTimeEnd - innerTimeStart))
+	print(str(yr) + " Completed, Elapsed Time: " + time.strftime("%H:%M:%S", time.gmtime(innerTimeEnd - innerTimeStart)))
+	
+	np.savez('storm_det_slp', storms=bigListStorms, year=year, month=month, day=day, hour=hour)
 
-		total = timeEnd - timeStart
-		totalTime += total
-		
-		if(tS % 500 == 0 or tS == T-1):
-			np.savez('storm_det_slp', storms=bigListStorms, year=year, month=month, day=day, hour=hour)	
-	ytEnd = time.time()
-	print("Processing completed for " + str(yr) + "... Elapsed Time: " + time.strftime("%H:%M:%S", time.gmtime(ytEnd - ytStart)))
-processEnd = time.time()	
-elapsed = processEnd - processStart
-print("Program completed. Total Elapsed Time: " + time.strftime("%H:%M:%S", time.gmtime(elapsed)))	
+pool.close() 
+pool.join()
+
+fullEnd = time.time()
+print("Program Completed, Elapsed Time: " + time.strftime("%H:%M:%S", time.gmtime(fullEnd - fullStart)))
+
+for i, yi in enumerate(yListTime):
+	print("Processing Time (" + str(yearStart + i) + "): " + time.strftime("%H:%M:%S", time.gmtime(yi)))

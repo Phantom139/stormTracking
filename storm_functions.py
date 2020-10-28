@@ -446,9 +446,17 @@ def calculate_bergeron(stormObject):
 	bergeronList = []
 	for i in range(len(stormObject['amp'])):
 		pressures = stormObject['amp'][i:i+8]
+		latitudes = stormObject['lat'][i:i+8]
+		
+		angFactor = np.sin(np.radians(60)) / np.sin(np.radians(latitudes))
+		
 		diffs = np.diff(pressures) / 100 #Convert Pa to mb
-		negatives = np.sum(val for val in diffs if val < 0)
-		bFactor = (-1 * np.sum(negatives)) / (24) # Robert Note: The 24 in here is the mb fall (Note the paper on correction later.
+		negatives = np.sum(val for val in diffs if val < 0)	
+		
+		bFactor = (-1 * np.sum(negatives)) / (24)
+		
+		final = bFactor * angFactor
+		
 		bergeronList.append(bFactor)
 	return bergeronList
 	
